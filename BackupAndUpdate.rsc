@@ -49,6 +49,8 @@
 ## Example: v6.43.6 => major.minor.PATCH
 ## Script will send information if new version is greater than just patch.
 :local installOnlyPatchUpdates false;
+## Firmware / application directory (use USB stick, requires Arch x 11MB)
+:local APPDIR "usb1-part1/firmware";
 
 ## If true, device public IP address information will be included into the email message
 :local detectPublicIpAddress true;
@@ -334,6 +336,25 @@ if ([:len [/system identity get name]] = 0 or [/system identity get name] = "Mik
                 :log info ("$SMP System is already up to date.");
                 :set mailSubject ($mailSubject . " No new OS updates.");
                 :set mailBody      ($mailBody . "Your system is up to date.");
+            };
+
+            :local archs {"mipsbe"; "mmips"; "arm"};
+            :local pkgs {"routeros"; "wireless"};
+
+            :foreach deviceOs in=$pkgs do={
+                :foreach deviceOsArch in=$archs do={
+                    :local deviceOsName "$deviceOs-$deviceOsVerAvail-$deviceOsArch.npk"
+                    :local exists [:len [/file find name="$APPDIR/$deviceOsName"]]
+
+                    :if ($exists = 0) do={
+                        :local path  [ :put "/routeros/$deviceOsVerAvail/$deviceOsName" ];
+                        :local url "https://cdn.mikrotik.com$path"
+                        :log info ("$SMP downloading $deviceOsArch firmware v$deviceOsVerAvail from $url to $APPDIR.");
+                        :do { /tool fetch url="$url" dst-path="$APPDIR" http-header-field="User-Agent: Mozilla/5.0"; } on-error={}
+                    } else {
+                        :log info ("$SMP $deviceOsArch firmware v$deviceOsVerAvail already stored at $APPDIR.");
+                    }
+                }
             }
         };
     } else={
