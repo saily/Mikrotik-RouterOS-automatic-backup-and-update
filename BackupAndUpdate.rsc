@@ -140,6 +140,7 @@
   :local backupName $1
   :local backupPassword $2
   :local sensitiveDataInConfig $3
+  :local usbstickdir "usb1-part1/backup"
 
   #Script messages prefix
   :local SMP "Bkp&Upd:"
@@ -152,33 +153,45 @@
     :error $exitErrorMessage
   }
 
-  :local backupFileSys "$usbstickdir/$backupName.backup"
+  # Ensure destination directory exists on USB storage
+  :if ([:len [/file find name=$usbstickdir]] = 0) do={
+    :log warning "$SMP Backup directory does not exist, creating it: `$usbstickdir`"
+    :do {
+      /file make-dir $usbstickdir
+    } on-error={
+      :log error "$SMP Failed to create backup directory: `$usbstickdir`"
+      :error $exitErrorMessage
+    }
+  }
+
+  :local backupFileBase "$usbstickdir/$backupName"
+  :local backupFileSys "$backupFileBase.backup"
   :local backupFileConfig "$usbstickdir/$backupName.rsc"
   :local backupNames {$backupFileSys;$backupFileConfig}
 
   ## Perform system backup
   :if ([:len $backupPassword] = 0) do={
-    :log info ("$SMP starting backup without password, backup name: `$backupName`")
-    /system backup save dont-encrypt=yes name=$backupName
+    :log info ("$SMP starting backup without password, backup name: `$backupFileBase`")
+    /system backup save dont-encrypt=yes name=$backupFileBase
   } else={
-    :log info ("$SMP starting backup with password, backup name: `$backupName`")
-    /system backup save password=$backupPassword name=$backupName
+    :log info ("$SMP starting backup with password, backup name: `$backupFileBase`")
+    /system backup save password=$backupPassword name=$backupFileBase
   }
 
   :log info ("$SMP system backup created: `$backupFileSys`")
 
     ## Export config file
   :if ($sensitiveDataInConfig = true) do={
-    :log info ("$SMP starting export config with sensitive data, backup name: `$backupName`")
+    :log info ("$SMP starting export config with sensitive data, backup name: `$backupFileBase`")
     # Since RouterOS v7 it needs to be explicitly set that we want to export sensitive data
     :if ([:pick [/system resource get version] 0 1] < 7) do={
-      :execute "/export compact terse file=$backupName"
+      :execute "/export compact terse file=$backupFileBase"
     } else={
-      :execute "/export compact show-sensitive terse file=$backupName"
+      :execute "/export compact show-sensitive terse file=$backupFileBase"
     }
   } else={
-    :log info ("$SMP starting export config without sensitive data, backup name: `$backupName`")
-    /export compact hide-sensitive terse file=$backupName
+    :log info ("$SMP starting export config without sensitive data, backup name: `$backupFileBase`")
+    /export compact hide-sensitive terse file=$backupFileBase
   }
 
   :log info ("$SMP Config export complete: `$backupFileConfig`")
