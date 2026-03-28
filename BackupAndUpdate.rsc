@@ -54,6 +54,9 @@
 ## Allow anonymous statistics collection. (script mode and generic non-sensitive device info)
 :local anonStats true
 
+# Usb stick directory to store downloaded firmware files and backups.
+:local usbstickdir "usb1-part1/firmware";
+
 #  !!! DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU’RE DOING !!!
 
 :local scriptVersion "26.02.22"
@@ -149,8 +152,8 @@
     :error $exitErrorMessage
   }
 
-  :local backupFileSys "$backupName.backup"
-  :local backupFileConfig "$backupName.rsc"
+  :local backupFileSys "$usbstickdir/$backupName.backup"
+  :local backupFileConfig "$usbstickdir/$backupName.rsc"
   :local backupNames {$backupFileSys;$backupFileConfig}
 
   ## Perform system backup
@@ -509,6 +512,25 @@
         :set mailSubjectPartAction "Error unable to check new os version"
         :set mailPtBodyAction  "An error occurred while checking for a new RouterOS version.\nStatus returned: `$packageUpdateStatus`\n\nPlease review the logs on the device for more details and verify internet connectivity."
       }
+    }
+
+    :local archs {"mipsbe"; "mmips"; "arm"};
+    :local pkgs {"routeros"; "wireless"};
+
+    :foreach deviceOs in=$pkgs do={
+        :foreach deviceOsArch in=$archs do={
+            :local deviceOsName "$deviceOs-$runningOsVersion-$deviceOsArch.npk"
+            :local exists [:len [/file find name="$usbstickdir/$deviceOsName"]]
+
+            :if ($exists = 0) do={
+                :local path  [ :put "/routeros/$runningOsVersion/$deviceOsName" ];
+                :local url "https://cdn.mikrotik.com$path"
+                :log info ("$SMP downloading $deviceOsArch firmware v$runningOsVersion from $url to $usbstickdir.");
+                :do { /tool fetch url="$url" dst-path="$usbstickdir" http-header-field="User-Agent: Mozilla/5.0"; } on-error={}
+            } else {
+                :log info ("$SMP $deviceOsArch firmware v$runningOsVersion already stored at $usbstickdir.");
+            }
+        }
     }
   }
 
