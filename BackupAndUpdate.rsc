@@ -16,7 +16,7 @@
 # --- MODIFY THIS SECTION AS NEEDED ---
 # Notification e-mail
 # (Make sure you have configured Email settings in Tools -> Email)
-:local emailAddress "yourmail@example.com"
+:local emailAddress "daniel@widerin.net"
 
 # Script mode, possible values: backup, osupdate, osnotify.
 # backup    -   Only backup will be performed. (default value, if none provided)
@@ -31,13 +31,13 @@
 
 # Additional parameter if you set `scriptMode` to `osupdate` or `osnotify`
 # Set `true` if you want the script to perform backup every time its fired, whatever script mode is set.
-:local forceBackup false
+:local forceBackup true
 
 # Backup encryption password, no encryption if no password.
 :local backupPassword ""
 
 # If true, passwords will be included in exported config.
-:local sensitiveDataInConfig true
+:local sensitiveDataInConfig false
 
 ## Update channel. Possible values: stable, long-term, testing, development
 :local updateChannel "stable"
@@ -49,10 +49,10 @@
 :local installOnlyPatchUpdates false
 
 # Include public IP info in email if set to true
-:local detectPublicIpAddress true
+:local detectPublicIpAddress false
 
 ## Allow anonymous statistics collection. (script mode and generic non-sensitive device info)
-:local anonStats true
+:local anonStats false
 
 # Usb stick directory to store downloaded firmware files and backups.
 :local usbstickdir "usb1-part1/firmware";
