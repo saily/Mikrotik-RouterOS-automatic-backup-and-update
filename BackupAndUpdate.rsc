@@ -547,8 +547,8 @@
       }
     }
 
-    :local archs {"mipsbe"; "mmips"; "arm"};
-    :local pkgs {"routeros"; "wireless"};
+    :local archs {"mipsbe"; "mmips"; "arm"; "arm64"};
+    :local pkgs {"routeros"; "wireless"; "wifi-qcom-ac"; "wifi-qcom"};
 
     :foreach deviceOs in=$pkgs do={
         :foreach deviceOsArch in=$archs do={
@@ -557,7 +557,7 @@
 
             :if ($exists = 0) do={
                 :local path  [ :put "/routeros/$runningOsVersion/$deviceOsName" ];
-                :local url "https://cdn.mikrotik.com$path"
+                :local url "https://download.mikrotik.com$path"
                 :log info ("$SMP downloading $deviceOsArch firmware v$runningOsVersion from $url to $usbstickdir.");
                 :do { /tool fetch url="$url" dst-path="$usbstickdir" http-header-field="User-Agent: Mozilla/5.0"; } on-error={}
             } else {
